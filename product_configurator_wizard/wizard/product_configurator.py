@@ -799,9 +799,11 @@ class ProductConfigurator(models.TransientModel):
             ids = [variant.id]
         except Exception as e:
             print "Exception", e
-            print "ID", e[0].split('.')[1]
-            ids = [int(e[0].split('.')[1])]
-
+            try:
+                print "ID", e[0].split('.')[1]
+                ids = [int(e[0].split('.')[1])]
+            except:
+                ids = []
         if not self.with_sale_order:
             return {
                 'domain': [('id', 'in', ids)],
