@@ -795,9 +795,8 @@ class ProductConfigurator(models.TransientModel):
             return
 
         variant = self.product_tmpl_id.create_variant(
-            self.value_ids.ids, custom_vals)
-       'required steps and fields.')
-        #)
+                self.value_ids.ids, custom_vals)
+
         print "Valor de la SO", self.with_sale_order
         if self.with_sale_order:
             so = self.env['sale.order'].browse(self.env.context.get('active_id'))
