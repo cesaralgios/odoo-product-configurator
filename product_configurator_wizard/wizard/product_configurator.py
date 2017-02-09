@@ -793,15 +793,11 @@ class ProductConfigurator(models.TransientModel):
             })
             self.unlink()
             return
-        try:
-            variant = self.product_tmpl_id.create_variant(
-                self.value_ids.ids, custom_vals)
-        except:
-            pass
-            #raise ValidationError(
-            #    _('Invalid configuration! Please check all '
-            #      'required steps and fields.')
-            #)
+
+        variant = self.product_tmpl_id.create_variant(
+            self.value_ids.ids, custom_vals)
+       'required steps and fields.')
+        #)
         print "Valor de la SO", self.with_sale_order
         if self.with_sale_order:
             so = self.env['sale.order'].browse(self.env.context.get('active_id'))
