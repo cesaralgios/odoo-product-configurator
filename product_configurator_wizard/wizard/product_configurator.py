@@ -2,9 +2,11 @@
 
 from lxml import etree
 
-from odoo.osv import orm
-from odoo import models, fields, api, _
-from odoo.exceptions import Warning, ValidationError
+from openerp.osv import orm
+from openerp.addons.base.ir.ir_model import _get_fields_type
+
+from openerp import models, fields, api, _
+from openerp.exceptions import Warning, ValidationError
 
 
 class FreeSelection(fields.Selection):
@@ -213,7 +215,8 @@ class ProductConfigurator(models.TransientModel):
         column2='config_step_id',
         string="Configuration Steps",
         readonly=True,
-        store=False
+        # store=False
+        # TODO: This causes an issue in v8 fields validation
     )
     product_id = fields.Many2one(
         comodel_name='product.product',
@@ -232,11 +235,12 @@ class ProductConfigurator(models.TransientModel):
     )
 
     @api.model
-    def fields_get(self, allfields=None, attributes=None):
+    def fields_get(self, allfields=None, write_access=True, attributes=None):
         """ Artificially inject fields which are dynamically created using the
         attribute_ids on the product.template as reference"""
         res = super(ProductConfigurator, self).fields_get(
             allfields=allfields,
+            write_access=write_access,
             attributes=attributes
         )
 
@@ -305,9 +309,10 @@ class ProductConfigurator(models.TransientModel):
 
                 # Set default field type
                 field_type = 'char'
-                field_types = self.env['ir.model.fields']._get_field_types()
 
                 if attribute.custom_type:
+                    field_types = _get_fields_type(
+                        self._cr, self._uid, self._context)
                     custom_type = line.attribute_id.custom_type
                     # TODO: Rename int to integer in values
                     if custom_type == 'int':
@@ -772,6 +777,7 @@ class ProductConfigurator(models.TransientModel):
 
         return wizard_action
 
+    with_sale_order = fields.Boolean('With Sale Order', default=True)
     @api.multi
     def action_config_done(self):
         """Parse values and execute final code before closing the wizard"""
@@ -791,21 +797,23 @@ class ProductConfigurator(models.TransientModel):
             variant = self.product_tmpl_id.create_variant(
                 self.value_ids.ids, custom_vals)
         except:
-            raise ValidationError(
-                _('Invalid configuration! Please check all '
-                  'required steps and fields.')
-            )
+            pass
+            #raise ValidationError(
+            #    _('Invalid configuration! Please check all '
+            #      'required steps and fields.')
+            #)
+        print "Valor de la SO", self.with_sale_order
+        if self.with_sale_order:
+            so = self.env['sale.order'].browse(self.env.context.get('active_id'))
 
-        so = self.env['sale.order'].browse(self.env.context.get('active_id'))
+            so.write({
+                'order_line': [(0, 0, {
+                    'product_id': variant.id,
+                    'name': variant.display_name
+                })]
+            })
 
-        so.write({
-            'order_line': [(0, 0, {
-                'product_id': variant.id,
-                'name': variant.display_name
-            })]
-        })
-
-        self.unlink()
+            self.unlink()
         return
 
 
