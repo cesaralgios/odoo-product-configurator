@@ -9,6 +9,7 @@
                 <form string="Product Configurator">
                     <header>
                         <field name="state" widget="statusbar" clickable="True"/>
+                        <field name="with_sale_order" invisible="1" />
                     </header>
                     <sheet>
                         <group col="4">

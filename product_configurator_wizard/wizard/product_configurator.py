@@ -777,6 +777,7 @@ class ProductConfigurator(models.TransientModel):
 
         return wizard_action
 
+    with_sale_order = fields.Boolean('With Sale Order', default=True)
     @api.multi
     def action_config_done(self):
         """Parse values and execute final code before closing the wizard"""
@@ -796,21 +797,23 @@ class ProductConfigurator(models.TransientModel):
             variant = self.product_tmpl_id.create_variant(
                 self.value_ids.ids, custom_vals)
         except:
-            raise ValidationError(
-                _('Invalid configuration! Please check all '
-                  'required steps and fields.')
-            )
+            pass
+            #raise ValidationError(
+            #    _('Invalid configuration! Please check all '
+            #      'required steps and fields.')
+            #)
+        print "Valor de la SO", self.with_sale_order
+        if self.with_sale_order:
+            so = self.env['sale.order'].browse(self.env.context.get('active_id'))
 
-        so = self.env['sale.order'].browse(self.env.context.get('active_id'))
+            so.write({
+                'order_line': [(0, 0, {
+                    'product_id': variant.id,
+                    'name': variant.display_name
+                })]
+            })
 
-        so.write({
-            'order_line': [(0, 0, {
-                'product_id': variant.id,
-                'name': variant.display_name
-            })]
-        })
-
-        self.unlink()
+            self.unlink()
         return
 
 
