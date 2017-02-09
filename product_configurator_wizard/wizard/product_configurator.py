@@ -793,9 +793,26 @@ class ProductConfigurator(models.TransientModel):
             })
             self.unlink()
             return
+        try:
+            variant = self.product_tmpl_id.create_variant(
+                    self.value_ids.ids, custom_vals)
+            ids = [variant.id]
+        except Exception as e:
+            print "Exception", e
+            print "ID", e[0].split('.')[1]
+            ids = [int(e[0].split('.')[1])]
 
-        variant = self.product_tmpl_id.create_variant(
-                self.value_ids.ids, custom_vals)
+        if not self.with_sale_order:
+            return {
+                'domain': [('id', 'in', ids)],
+                'name': 'Productos',
+                'view_type': 'form',
+                'view_mode': 'tree,form',
+                'res_model': 'product.product',
+                'type': 'ir.actions.act_window',
+                #'views': [(False, 'tree'), (form_view_id, 'form')],
+                #'search_view_id': search_view_id,
+            }
 
         print "Valor de la SO", self.with_sale_order
         if self.with_sale_order:
