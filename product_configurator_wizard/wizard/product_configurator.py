@@ -793,6 +793,7 @@ class ProductConfigurator(models.TransientModel):
             })
             self.unlink()
             return
+
         try:
             variant = self.product_tmpl_id.create_variant(
                     self.value_ids.ids, custom_vals)
@@ -804,6 +805,7 @@ class ProductConfigurator(models.TransientModel):
                 ids = [int(e[0].split('.')[1])]
             except:
                 ids = []
+        self.env['product.product'].clear_caches()
         if not self.with_sale_order:
             return {
                 'domain': [('id', 'in', ids)],
